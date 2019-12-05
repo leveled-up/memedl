@@ -1,0 +1,36 @@
+{
+  "name": "memedl",
+  "version": "0.1.0",
+  "description": "Memedl is a very simple tool to download the latest images from a specific sub reddit.",
+  "main": "memedl.js",
+  "dependencies": {
+    "minimist": "^1.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node memedl.js --limit 100 --sub historymemes"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leveled-up/memedl.git"
+  },
+  "keywords": [
+    "meme",
+    "reddit",
+    "node",
+    "download",
+    "rip",
+    "memes",
+    "extract",
+    "images",
+    "crawler",
+    "regex",
+    "javascript"
+  ],
+  "author": "RunStorage.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/leveled-up/memedl/issues"
+  },
+  "homepage": "https://github.com/leveled-up/memedl#readme"
+}
