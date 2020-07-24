@@ -4,7 +4,7 @@
   "description": "Memedl is a very simple tool to download the latest images from a specific sub reddit.",
   "main": "memedl.js",
   "dependencies": {
-    "minimist": "^1.2.0"
+    "minimist": ">=1.2.3"
   },
   "devDependencies": {},
   "scripts": {
