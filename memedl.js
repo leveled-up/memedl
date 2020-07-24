@@ -6,6 +6,7 @@ const minimist = require("minimist");
 
 // settings
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36";
+const cookies = "over18=1";
 
 // command-line flags
 const params = minimist(process.argv.slice(2));
@@ -25,7 +26,7 @@ const limit = params.limit || params.n || null;
 const sub = params.sub || params.s || params.i || null;
 const dump = params.dump || params.v || false;
 
-if (sub === null || limit === null) {
+if (!sub || !limit) {
     console.log("Error: --sub and --limit is required. Use --help for more details.");
     process.exit(1);
 }
@@ -33,7 +34,7 @@ if (sub === null || limit === null) {
 // Output path (create if not existing)
 const outputPath = path.join((params.output || params.o || ""), sub);
 if (!fs.existsSync(outputPath))
-    fs.mkdirSync(outputPath);
+    fs.mkdirSync(outputPath, { recursive: true });
 
 // Download HTML pages from reddit
 function downloadPage(url, page = 1, dumpPages = false) {
@@ -42,7 +43,8 @@ function downloadPage(url, page = 1, dumpPages = false) {
             new URL(url),
             {
                 headers: {
-                    'User-Agent': userAgent
+                    'User-Agent': userAgent,
+                    'Cookie': cookies
                 }
             }, (res) => {
                 if (res.statusCode !== 200)
@@ -52,7 +54,7 @@ function downloadPage(url, page = 1, dumpPages = false) {
                 let buffer = "";
                 const outputStream = dumpPages ? fs.createWriteStream(path.join(outputPath, `.${sub}-page${page}.html`)) : null;
                 res.on('data', chunk => {
-                    buffer += chunk.toString()
+                    buffer += chunk.toString();
                     if (outputStream !== null)
                         outputStream.write(chunk);
                 });
@@ -64,12 +66,14 @@ function downloadPage(url, page = 1, dumpPages = false) {
 // Extract URLs from HTML
 function processPage(html) {
     let imageUrls = [];
-    for (let imageUrl of html.matchAll(/https:\/\/i\.redd\.it\/[0-9a-z_]{10,16}\.((png)|(jpg)|(gif))/g)) {
+    for (let imageUrl of html.matchAll(/https:\/\/i\.redd\.it\/[0-9a-z_]{10,16}\.((png)|(jpg)|(gif))/g))
         imageUrls.push(imageUrl[0]);
-    }
 
     let next = html
-        .match(/<link rel="next" href=".+"\/>/)[0]
+        .match(/<link rel="next" href=".+"\/>/);
+    if (!next)
+        return false;
+    next = next[0]
         .split("\"")[3]
         .replace(/&amp;/g, "&");
 
@@ -87,7 +91,8 @@ function downloadImage(url) {
             new URL(url),
             {
                 headers: {
-                    'User-Agent': userAgent
+                    'User-Agent': userAgent,
+                    'Cookie': cookies
                 }
             }, (res) => {
                 if (res.statusCode !== 200)
@@ -139,11 +144,14 @@ function downloadImage(url) {
                 break;
 
             console.log(`[#${totalFound}] GET ${image}`);
-            let download = await downloadImage(image);
-            if (!download)
-                console.log("Error: " + download);
-            else
-                console.log("200 OK \u21d2 " + download.filepath);
+            let download;
+            try {
+                download = await downloadImage(image);
+            } catch (err) {
+                console.log("Error: " + err.toString());
+                continue;
+            }
+            console.log(`${download.skipped ? "\u2713 Found" : "200 OK"} \u21d2 ${download.filepath}`);
         }
     }
-})()
+})();
